@@ -9,8 +9,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Get the correct path to the Python script
-// On Render, __dirname points to dist/services, so we need to go up 2 levels to backend root
-const GEMINI_SCRIPT_PATH = path.join(__dirname, '..', '..', 'gemini_image_generate.py');
+// __dirname = dist/services, need to go up 3 levels to backend root
+// dist/services -> dist -> src -> backend
+const GEMINI_SCRIPT_PATH = path.join(__dirname, '..', '..', '..', 'gemini_image_generate.py');
 
 export class GeminiImageService {
   static async generateImage(prompt: string, inputImageUrl: string): Promise<Buffer> {
