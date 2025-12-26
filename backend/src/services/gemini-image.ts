@@ -9,8 +9,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Get the correct path to the Python script
-// __dirname = dist/services, go up 1 level to dist folder where the script is copied
-const GEMINI_SCRIPT_PATH = path.join(__dirname, '..', 'gemini_image_generate.py');
+// __dirname = dist/services, go up 2 levels to dist, then to src where the script is located
+const GEMINI_SCRIPT_PATH = path.join(__dirname, '..', '..', 'src', 'gemini_image_generate.py');
 
 export class GeminiImageService {
   static async generateImage(prompt: string, inputImageUrl: string): Promise<Buffer> {
