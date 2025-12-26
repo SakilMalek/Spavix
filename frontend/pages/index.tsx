@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { Upload, Palette, Download } from 'lucide-react';
 import ModernNavbar from '../components/modern-navbar';
 
 export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect authenticated users to dashboard
+    const token = localStorage.getItem('token');
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #f0f9ff, #e0e7ff)' }}>
       {/* Header */}
