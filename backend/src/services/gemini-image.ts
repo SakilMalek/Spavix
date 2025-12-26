@@ -2,6 +2,11 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import sharp from 'sharp';
+import { fileURLToPath } from 'url';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Get the correct path to the Python script
 // On Render, __dirname points to dist/services, so we need to go up 2 levels to backend root
