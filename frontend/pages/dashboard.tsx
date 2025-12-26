@@ -292,9 +292,9 @@ export default function Dashboard() {
                         const reader = new FileReader();
                         reader.onload = (e) => {
                           const imageData = e.target?.result as string;
-                          // Store image in sessionStorage and navigate to image editor
-                          sessionStorage.setItem('imageToEdit', imageData);
-                          router.push('/image-editor?image=' + encodeURIComponent(imageData));
+                          // Set uploaded image directly on dashboard (no redirect)
+                          setUploadedImage(imageData);
+                          setOriginalImage(imageData);
                         };
                         reader.readAsDataURL(files[0]);
                       }
