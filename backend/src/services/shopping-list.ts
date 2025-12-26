@@ -1,8 +1,15 @@
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
+import { fileURLToPath } from 'url';
 
-const SHOPPING_LIST_SCRIPT_PATH = path.join(process.cwd(), 'gemini_shopping_list.py');
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Get the correct path to the Python script
+// __dirname = dist/services, go up 2 levels to dist, then to src where the script is located
+const SHOPPING_LIST_SCRIPT_PATH = path.join(__dirname, '..', '..', 'src', 'gemini_shopping_list.py');
 
 export class ShoppingListService {
   static async generateShoppingList(beforeImageUrl: string, afterImageUrl: string): Promise<string> {
