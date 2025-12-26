@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && cp gemini_image_generate.py dist/ && cp gemini_config.json dist/",
     "start": "node dist/index.js",
     "test": "jest"
   },
