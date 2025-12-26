@@ -131,6 +131,17 @@ export class Database {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
+    // Add name and picture columns if they don't exist
+    await this.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS name VARCHAR(255);
+    `);
+    await this.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS picture TEXT;
+    `);
+
+    await this.query(`
 
       CREATE TABLE IF NOT EXISTS generations (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

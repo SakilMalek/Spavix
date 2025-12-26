@@ -73,19 +73,25 @@ authRoutes.post('/login', async (req: AuthRequest, res: Response): Promise<void>
 
 authRoutes.post('/google', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    console.log('Google login request received:', { email: req.body.email });
     const { email, name, picture } = req.body;
 
     if (!email) {
+      console.log('Email missing from request');
       res.status(400).json({ error: 'Email required' });
       return;
     }
 
+    console.log('Fetching user by email:', email);
     let user = await Database.getUserByEmail(email);
+    console.log('User found:', !!user);
 
     if (!user) {
+      console.log('Creating new user');
       const randomPassword = Math.random().toString(36).slice(-12);
       const passwordHash = await bcrypt.hash(randomPassword, 10);
       const newUser = await Database.createUser(email, passwordHash, name, picture);
+      console.log('New user created:', newUser.id);
       user = {
         id: newUser.id,
         email,
@@ -94,6 +100,7 @@ authRoutes.post('/google', async (req: AuthRequest, res: Response): Promise<void
         picture: picture || undefined,
       };
     } else {
+      console.log('Updating existing user profile');
       if (name || picture) {
         await Database.updateUserProfile(user.id, name, picture);
       }
@@ -104,12 +111,14 @@ authRoutes.post('/google', async (req: AuthRequest, res: Response): Promise<void
       };
     }
 
+    console.log('Generating JWT token');
     const jwtToken = jwt.sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '7d' }
     );
 
+    console.log('Sending response');
     res.json({
       token: jwtToken,
       user: {
@@ -121,7 +130,8 @@ authRoutes.post('/google', async (req: AuthRequest, res: Response): Promise<void
     });
   } catch (error) {
     console.error('Google login error:', error);
-    res.status(500).json({ error: 'Google login failed', details: String(error) });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ error: 'Google login failed', details: errorMessage });
   }
 });
 
