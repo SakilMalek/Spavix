@@ -3,7 +3,9 @@ import * as path from 'path';
 import * as fs from 'fs';
 import sharp from 'sharp';
 
-const GEMINI_SCRIPT_PATH = path.join(process.cwd(), 'gemini_image_generate.py');
+// Get the correct path to the Python script
+// On Render, __dirname points to dist/services, so we need to go up 2 levels to backend root
+const GEMINI_SCRIPT_PATH = path.join(__dirname, '..', '..', 'gemini_image_generate.py');
 
 export class GeminiImageService {
   static async generateImage(prompt: string, inputImageUrl: string): Promise<Buffer> {
@@ -66,9 +68,23 @@ export class GeminiImageService {
       console.log(`[Gemini] API Key loaded: ${apiKey.substring(0, 10)}...`);
       console.log(`[Gemini] Input path: ${inputPath}`);
       console.log(`[Gemini] Output path: ${outputPath}`);
+      console.log(`[Gemini] Script path: ${GEMINI_SCRIPT_PATH}`);
+      console.log(`[Gemini] Script exists: ${fs.existsSync(GEMINI_SCRIPT_PATH)}`);
+      console.log(`[Gemini] __dirname: ${__dirname}`);
+      console.log(`[Gemini] process.cwd(): ${process.cwd()}`);
+      
+      // Check if script exists, if not try alternative paths
+      let scriptPath = GEMINI_SCRIPT_PATH;
+      if (!fs.existsSync(scriptPath)) {
+        const alternativePath = path.join(process.cwd(), 'gemini_image_generate.py');
+        if (fs.existsSync(alternativePath)) {
+          console.log(`[Gemini] Using alternative script path: ${alternativePath}`);
+          scriptPath = alternativePath;
+        }
+      }
       
       const pythonProcess = spawn('python', [
-        GEMINI_SCRIPT_PATH,
+        scriptPath,
         '--prompt',
         prompt,
         '--input',
