@@ -121,25 +121,58 @@ export class Database {
   }
 
   static async initializeDatabase(): Promise<void> {
-    await this.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        name VARCHAR(255),
-        picture TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+    // Create users table if it doesn't exist
+    try {
+      await this.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          email VARCHAR(255) UNIQUE NOT NULL,
+          password_hash VARCHAR(255) NOT NULL,
+          name VARCHAR(255),
+          picture TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+    } catch (error) {
+      console.log('Users table creation (may already exist):', error);
+    }
 
-    // Add name and picture columns if they don't exist
-    await this.query(`
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS name VARCHAR(255);
-    `);
-    await this.query(`
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS picture TEXT;
-    `);
+    // Add name column if it doesn't exist
+    try {
+      await this.query(`
+        ALTER TABLE users ADD COLUMN name VARCHAR(255);
+      `);
+      console.log('Added name column to users table');
+    } catch (error: any) {
+      if (error.code !== '42701') { // 42701 = column already exists
+        console.log('Name column already exists or error:', error.message);
+      }
+    }
+
+    // Add picture column if it doesn't exist
+    try {
+      await this.query(`
+        ALTER TABLE users ADD COLUMN picture TEXT;
+      `);
+      console.log('Added picture column to users table');
+    } catch (error: any) {
+      if (error.code !== '42701') { // 42701 = column already exists
+        console.log('Picture column already exists or error:', error.message);
+      }
+    }
+
+    // Add updated_at column if it doesn't exist
+    try {
+      await this.query(`
+        ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      `);
+      console.log('Added updated_at column to users table');
+    } catch (error: any) {
+      if (error.code !== '42701') {
+        console.log('Updated_at column already exists or error:', error.message);
+      }
+    }
 
     await this.query(`
 
