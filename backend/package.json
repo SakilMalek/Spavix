@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc && node copy-files.js",
+    "build": "tsc && pip install -r requirements.txt",
     "start": "node dist/index.js",
     "test": "jest"
   },
