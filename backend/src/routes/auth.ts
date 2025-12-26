@@ -90,11 +90,13 @@ authRoutes.post('/google', async (req: AuthRequest, res: Response): Promise<void
         id: newUser.id,
         email,
         password_hash: passwordHash,
-        name,
-        picture,
+        name: name || undefined,
+        picture: picture || undefined,
       };
     } else {
-      await Database.updateUserProfile(user.id, name, picture);
+      if (name || picture) {
+        await Database.updateUserProfile(user.id, name, picture);
+      }
       user = {
         ...user,
         name: name || user.name,
@@ -113,13 +115,13 @@ authRoutes.post('/google', async (req: AuthRequest, res: Response): Promise<void
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
-        picture: user.picture,
+        name: user.name || null,
+        picture: user.picture || null,
       },
     });
   } catch (error) {
     console.error('Google login error:', error);
-    res.status(500).json({ error: 'Google login failed' });
+    res.status(500).json({ error: 'Google login failed', details: String(error) });
   }
 });
 
