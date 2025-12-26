@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useTheme } from '@/context/ThemeContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function Login() {
   const router = useRouter();
@@ -45,6 +46,12 @@ export default function Login() {
       });
 
       localStorage.setItem('token', response.data.token);
+      if (response.data.user?.picture) {
+        localStorage.setItem('userProfilePicture', response.data.user.picture);
+      }
+      if (response.data.user?.name) {
+        localStorage.setItem('userName', response.data.user.name);
+      }
       toast.success('Logged in successfully!');
       router.push('/dashboard');
     } catch (error: any) {
@@ -52,6 +59,39 @@ export default function Login() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setIsLoading(true);
+      
+      const decoded = JSON.parse(atob(credentialResponse.credential.split('.')[1]));
+      
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`, {
+        email: decoded.email,
+        name: decoded.name,
+        picture: decoded.picture,
+      });
+
+      localStorage.setItem('token', response.data.token);
+      if (response.data.user?.picture) {
+        localStorage.setItem('userProfilePicture', response.data.user.picture);
+      }
+      if (response.data.user?.name) {
+        localStorage.setItem('userName', response.data.user.name);
+      }
+      toast.success('Logged in with Google successfully!');
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      toast.error(error.response?.data?.error || 'Google login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error('Google login failed');
   };
 
   return (
@@ -106,6 +146,21 @@ export default function Login() {
               {isLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.5rem 0' }}>
+            <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
+            <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>Or continue with</span>
+            <div style={{ flex: 1, height: '1px', backgroundColor: '#e5e7eb' }}></div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            {mounted && (
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+              />
+            )}
+          </div>
 
           <p style={{ textAlign: 'center', color: '#4b5563', marginTop: '1.5rem' }}>
             Don't have an account?{' '}

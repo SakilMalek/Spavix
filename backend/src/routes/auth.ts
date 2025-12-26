@@ -71,6 +71,58 @@ authRoutes.post('/login', async (req: AuthRequest, res: Response): Promise<void>
   }
 });
 
+authRoutes.post('/google', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { email, name, picture } = req.body;
+
+    if (!email) {
+      res.status(400).json({ error: 'Email required' });
+      return;
+    }
+
+    let user = await Database.getUserByEmail(email);
+
+    if (!user) {
+      const randomPassword = Math.random().toString(36).slice(-12);
+      const passwordHash = await bcrypt.hash(randomPassword, 10);
+      const newUser = await Database.createUser(email, passwordHash, name, picture);
+      user = {
+        id: newUser.id,
+        email,
+        password_hash: passwordHash,
+        name,
+        picture,
+      };
+    } else {
+      await Database.updateUserProfile(user.id, name, picture);
+      user = {
+        ...user,
+        name: name || user.name,
+        picture: picture || user.picture,
+      };
+    }
+
+    const jwtToken = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token: jwtToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+      },
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({ error: 'Google login failed' });
+  }
+});
+
 authRoutes.get('/me', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {

@@ -53,22 +53,29 @@ export class Database {
     }
   }
 
-  static async createUser(email: string, passwordHash: string): Promise<{ id: string }> {
+  static async createUser(email: string, passwordHash: string, name?: string, picture?: string): Promise<{ id: string }> {
     const result = await this.query(
-      'INSERT INTO users (email, password_hash, created_at) VALUES ($1, $2, NOW()) RETURNING id',
-      [email, passwordHash]
+      'INSERT INTO users (email, password_hash, name, picture, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id',
+      [email, passwordHash, name || null, picture || null]
     );
     return result.rows[0];
   }
 
-  static async getUserByEmail(email: string): Promise<{ id: string; email: string; password_hash: string } | null> {
-    const result = await this.query('SELECT id, email, password_hash FROM users WHERE email = $1', [email]);
+  static async getUserByEmail(email: string): Promise<{ id: string; email: string; password_hash: string; name?: string; picture?: string } | null> {
+    const result = await this.query('SELECT id, email, password_hash, name, picture FROM users WHERE email = $1', [email]);
     return result.rows[0] || null;
   }
 
-  static async getUserById(id: string): Promise<{ id: string; email: string } | null> {
-    const result = await this.query('SELECT id, email FROM users WHERE id = $1', [id]);
+  static async getUserById(id: string): Promise<{ id: string; email: string; name?: string; picture?: string } | null> {
+    const result = await this.query('SELECT id, email, name, picture FROM users WHERE id = $1', [id]);
     return result.rows[0] || null;
+  }
+
+  static async updateUserProfile(id: string, name?: string, picture?: string): Promise<void> {
+    await this.query(
+      'UPDATE users SET name = COALESCE($2, name), picture = COALESCE($3, picture), updated_at = NOW() WHERE id = $1',
+      [id, name || null, picture || null]
+    );
   }
 
   static async saveGeneration(
@@ -119,6 +126,8 @@ export class Database {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         email VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
+        name VARCHAR(255),
+        picture TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
