@@ -91,4 +91,3 @@ Thumbs.db
 # Project specific
 backend_output/
 *.pyc
-gemini_*.py

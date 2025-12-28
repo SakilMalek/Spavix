@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import axios from 'axios';
@@ -10,6 +11,12 @@ import { useTheme } from '@/context/ThemeContext';
 import { FileUpload } from '@/components/ui/file-upload';
 import { ModernTransformationCard } from '@/components/ui/modern-transformation-card';
 import { HoverBorderGradient } from '@/components/ui/hover-border-gradient';
+
+// Lazy load ProductSidebar to reduce initial bundle
+const ProductSidebar = dynamic(() => import('../components/ProductSidebar'), {
+  loading: () => <div style={{ padding: '2rem', textAlign: 'center' }}>Loading products...</div>,
+  ssr: false,
+});
 
 interface Generation {
   id: string;
@@ -51,7 +58,7 @@ export default function Dashboard() {
 
   const isDark = theme === 'dark';
 
-  const { latestGeneration: cachedLatestGeneration, setLatestGeneration, isLatestGenerationCacheValid } = useAppStore();
+  const { latestGeneration: cachedLatestGeneration, setLatestGeneration, isLatestGenerationCacheValid, invalidateLatestGenerationCache } = useAppStore();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [styles, setStyles] = useState<Style[]>([]);
@@ -68,6 +75,11 @@ export default function Dashboard() {
     curtainType: 'sheer',
     lightingMood: 'neutral',
   });
+  const [showProductSidebar, setShowProductSidebar] = useState(false);
+  const [detectedItems, setDetectedItems] = useState<any[]>([]);
+  const [productMatches, setProductMatches] = useState<any[]>([]);
+  const [isDetectingProducts, setIsDetectingProducts] = useState(false);
+  const [lastGeneratedImagePath, setLastGeneratedImagePath] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -183,6 +195,8 @@ export default function Dashboard() {
       toast.success('Image generated successfully!');
       setUploadedImage(null);
       setSelectedStyle('');
+      // Invalidate cache to force fresh fetch of new generation
+      invalidateLatestGenerationCache();
       fetchData();
     } catch (error) {
       console.error('Generation error:', error);
@@ -197,6 +211,30 @@ export default function Dashboard() {
     router.push('/');
   };
 
+  const handleDetectProducts = async (imageUrl: string) => {
+    try {
+      setIsDetectingProducts(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products/detect-and-match`,
+        { imageUrl },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setDetectedItems(response.data.detectedItems || []);
+      setProductMatches(response.data.productMatches || []);
+      setShowProductSidebar(true);
+      toast.success(`Detected ${response.data.totalItems} items!`);
+    } catch (error: any) {
+      console.error('Product detection error:', error);
+      toast.error('Failed to detect products');
+    } finally {
+      setIsDetectingProducts(false);
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -464,7 +502,7 @@ export default function Dashboard() {
 
             {/* Latest Transformation */}
             {generations.length > 0 && (
-              <div style={{ gridColumn: 'span 2' }}>
+              <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <ModernTransformationCard
                   beforeImage={generations[0].beforeImageUrl}
                   afterImage={generations[0].afterImageUrl}
@@ -483,11 +521,80 @@ export default function Dashboard() {
                     document.body.removeChild(link);
                   }}
                 />
+                
+                {/* Detect Products Button */}
+                <button
+                  onClick={() => handleDetectProducts(generations[0].afterImageUrl)}
+                  disabled={isDetectingProducts}
+                  className={isDark ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'}
+                  style={{
+                    color: 'white',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '0.5rem',
+                    border: 'none',
+                    cursor: isDetectingProducts ? 'not-allowed' : 'pointer',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    opacity: isDetectingProducts ? 0.7 : 1,
+                  }}
+                >
+                  {isDetectingProducts ? (
+                    <>
+                      <Loader style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />
+                      Detecting Products...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart size={18} />
+                      Detect Products & Find Deals
+                    </>
+                  )}
+                </button>
               </div>
             )}
           </div>
         )}
       </div>
+
+      {/* Product Sidebar Modal */}
+      {showProductSidebar && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          height: '100vh',
+          width: '100%',
+          maxWidth: '450px',
+          zIndex: 1000,
+          boxShadow: '-4px 0 12px rgba(0,0,0,0.15)',
+        }}>
+          <ProductSidebar
+            items={detectedItems}
+            productMatches={productMatches}
+            isLoading={isDetectingProducts}
+            onClose={() => setShowProductSidebar(false)}
+          />
+        </div>
+      )}
+
+      {/* Overlay when sidebar is open */}
+      {showProductSidebar && (
+        <div
+          onClick={() => setShowProductSidebar(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            zIndex: 999,
+          }}
+        />
+      )}
 
       <style>{`
         @keyframes spin {

@@ -75,7 +75,7 @@ export default function ImageEditor() {
     } else {
       // Check if image is in sessionStorage
       const storedImage = sessionStorage.getItem('imageToEdit');
-      if (storedImage) {
+      if (storedImage && storedImage.length > 0) {
         setImageUrl(storedImage);
         loadImage(storedImage);
       }
@@ -83,9 +83,16 @@ export default function ImageEditor() {
   }, [imageParam]);
 
   const loadImage = (url: string) => {
+    if (!url || url.length === 0) {
+      toast.error('No image provided');
+      return;
+    }
+
     const img = new Image();
     img.crossOrigin = 'anonymous';
+    
     img.onload = () => {
+      console.log('Image loaded successfully:', img.width, 'x', img.height);
       setOriginalImage(img);
       const initialState: EditState = {
         rotation: 0,
@@ -98,12 +105,22 @@ export default function ImageEditor() {
       };
       setHistory([{ state: initialState, timestamp: Date.now() }]);
       setHistoryIndex(0);
-      drawCanvas(initialState);
+      // Use setTimeout to ensure canvas is ready
+      setTimeout(() => drawCanvas(initialState), 100);
     };
-    img.onerror = () => {
-      toast.error('Failed to load image');
+    
+    img.onerror = (error) => {
+      console.error('Failed to load image:', error);
+      toast.error('Failed to load image. Please try uploading again.');
     };
-    img.src = url;
+    
+    // Ensure the URL is valid before setting src
+    try {
+      img.src = url;
+    } catch (error) {
+      console.error('Error setting image src:', error);
+      toast.error('Invalid image data');
+    }
   };
 
   const drawCanvas = useCallback(

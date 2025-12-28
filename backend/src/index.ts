@@ -10,6 +10,7 @@ import { uploadRoutes } from './routes/upload.js';
 import { generationRoutes } from './routes/generation.js';
 import { stylesRoutes } from './routes/styles.js';
 import { materialsRoutes } from './routes/materials.js';
+import productsRoutes from './routes/products.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { authMiddleware } from './middleware/auth.js';
 import { Database } from './services/database.js';
@@ -63,6 +64,7 @@ app.use('/api/upload', authMiddleware, uploadRoutes);
 app.use('/api/generate', authMiddleware, generationRoutes);
 app.use('/api/styles', stylesRoutes);
 app.use('/api/materials', materialsRoutes);
+app.use('/api/products', authMiddleware, productsRoutes);
 
 app.use(errorHandler);
 

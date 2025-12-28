@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useTheme } from '@/context/ThemeContext';
 import { Home, History, LogOut, Menu, X, Wand2, User } from 'lucide-react';
@@ -86,9 +87,13 @@ export default function ModernNavbar({ onLogout }: NavbarProps) {
               onClick={() => handleNavClick('/dashboard')}
               className="flex items-center gap-3 cursor-pointer flex-shrink-0 hover:opacity-80 transition-opacity"
             >
-              <img
+              <Image
                 src={isDark ? '/logo-dark.png' : '/logo-light.png'}
                 alt="SPAVIX"
+                width={140}
+                height={80}
+                priority
+                quality={85}
                 className="h-20 w-auto"
               />
             </div>

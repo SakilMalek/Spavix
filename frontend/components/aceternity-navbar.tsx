@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useTheme } from '@/context/ThemeContext';
 import { Moon, Sun, LogOut } from 'lucide-react';
@@ -48,9 +49,13 @@ export default function AceterityNavbar() {
       <NavBody>
         {/* Logo */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <img
+          <Image
             src={isDark ? '/logo-dark.png' : '/logo-light.png'}
             alt="SPAVIX"
+            width={96}
+            height={48}
+            priority
+            quality={85}
             className="h-12 w-auto"
           />
           <span className={isDark ? 'text-white text-lg font-bold' : 'text-gray-900 text-lg font-bold'}>
@@ -95,9 +100,13 @@ export default function AceterityNavbar() {
       <MobileNav>
         <MobileNavHeader>
           <div className="flex items-center gap-2">
-            <img
+            <Image
               src={isDark ? '/logo-dark.png' : '/logo-light.png'}
               alt="SPAVIX"
+              width={80}
+              height={40}
+              priority
+              quality={85}
               className="h-10 w-auto"
             />
             <span className={isDark ? 'text-white font-bold' : 'text-gray-900 font-bold'}>

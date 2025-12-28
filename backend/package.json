@@ -11,6 +11,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.11.5",
     "aws-sdk": "^2.1500.0",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
